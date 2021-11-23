@@ -1439,21 +1439,34 @@ function entityreference_view($entity_type, $entities, $view_mode = 'full', $lan
 
   $view = array();
   foreach ($entities as $entity) {
-    $build = entityreference_build_content($entity_type, $entity, $view_mode, $langcode);
-    $build = $entity->content;
-    $build += array(
-      // @see template_preprocess_entityreference_rendered()
-      '#theme' => 'entityreference_rendered',
-      '#entity_type' => $entity_type,
-      '#entity' => $entity,
-      '#view_mode' => $view_mode,
-      '#language' => $langcode,
-      '#page' => $page,
-    );
-    // Allow modules to modify the structured entity.
-    backdrop_alter(array($entity_type . '_view', 'entityreference_view'), $build, $entity_type);
-    $key = $entity->id();
-    $view[$entity_type][$key] = $build;
+    $view_function = $entity_type . '_view';
+    if (function_exists($view_function)) {
+      if ($view_function == 'comment_view') {
+        $node = node_load($entity->nid);
+        $build = comment_view($entity, $node, $view_mode, $langcode);
+        // make comment like other entities.
+      }
+      else {
+        $build = call_user_func($view_function, $entity, $view_mode, $langcode);
+      }
+      // @todo fix for rendered files too.
+    }
+    else {
+      entityreference_build_content($entity_type, $entity, $view_mode, $langcode);
+      $build = $entity->content;
+      // Allow modules to modify the structured entity.
+      backdrop_alter(array($entity_type . '_view', 'entityreference_view'), $build, $entity_type);
+      $build += array(
+        // @see template_preprocess_entityreference_rendered()
+        '#theme' => 'entityreference_rendered',
+        '#entity_type' => $entity_type,
+        '#view_mode' => $view_mode,
+        '#language' => $langcode,
+      );
+    }
+    $build['#entity'] = $entity;
+    $build['#page'] = !$page;
+    $view[$entity_type][$entity->id()] = $build;
   }
   return $view;
 }

@@ -46,11 +46,10 @@ function template_preprocess_entityreference_rendered(&$variables) {
   $variables['classes_array'][] = backdrop_html_class('entity-' . $entity_type);
   $variables['classes_array'][] = backdrop_html_class($entity_type . '-' . $bundle);
 
-  // Add suggestions.
-  $variables['theme_hook_suggestions'][] = 'entityreference_rendered__' . $entity_type;
-  $variables['theme_hook_suggestions'][] = 'entityreference_rendered__' . $entity_type . '__' . $bundle;
-  $variables['theme_hook_suggestions'][] = 'entityreference_rendered__' . $entity_type . '__' . $bundle . '__' . $variables['view_mode'];
-  if ($id = $entity->id()) {
-    $variables['theme_hook_suggestions'][] = 'entityreference_rendered__' . $entity_type . '__' . $id;
+  $variables['theme_hook_suggestions'][] = $entity_type;
+  $variables['theme_hook_suggestions'][] = $entity_type . '__' . $bundle;
+  $variables['theme_hook_suggestions'][] = $entity_type . '__' . $bundle . '__' . $variables['view_mode'];
+  if ($id = entity_plus_id($entity_type, $entity)) {
+    $variables['theme_hook_suggestions'][] = $entity_type . '__' . $id;
   }
 }
