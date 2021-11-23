@@ -1391,10 +1391,11 @@ function entityreference_field_formatter_view($entity_type, $entity, $field, $in
 
         $target_entity = clone $item['entity'];
         unset($target_entity->content);
-        $result[$delta] = entityreference_view($target_type, array($item[$column] => $target_entity), $settings['view_mode'], $target_langcode, !empty($settings['hide_title']));
-
-        if (empty($settings['links']) && isset($result[$delta][$target_type][$item[$column]]['links'])) {
-          $result[$delta][$target_type][$item[$column]]['links']['#access'] = FALSE;
+        $view = entityreference_view($target_type, array($item[$column] => $target_entity), $settings['view_mode'], $target_langcode, !empty($settings['hide_title']));
+        // Only passing one entity at a time so only need the first.
+        $result[$delta] = $view[0];
+        if (empty($settings['links']) && isset($result[$delta]['links'])) {
+          $result[$delta]['links']['#access'] = FALSE;
         }
         $depth = 0;
       }
@@ -1438,34 +1439,14 @@ function entityreference_view($entity_type, $entities, $view_mode = 'full', $lan
 
   $view = array();
   foreach ($entities as $entity) {
-    $view_function = $entity_type . '_view';
-    if (function_exists($view_function)) {
-      if ($view_function == 'comment_view') {
-        $node = node_load($entity->nid);
-        $build = comment_view($entity, $node, $view_mode, $langcode);
-        // @todo make comment like other entities.
-      }
-      else {
-        $build = call_user_func($view_function, $entity, $view_mode, $langcode);
-      }
-      // @todo fix for rendered files too.
-    }
-    else {
-      entityreference_build_content($entity_type, $entity, $view_mode, $langcode);
-      $build = $entity->content;
-      $build += array(
-        // @see template_preprocess_entityreference_rendered()
-        '#theme' => 'entityreference_rendered',
-        '#entity_type' => $entity_type,
-        '#view_mode' => $view_mode,
-        '#language' => $langcode,
-      );
-    }
+    entityreference_build_content($entity_type, $entity, $view_mode, $langcode, $page);
+    $build = $entity->content;
+
     // Allow modules to modify the structured entity.
     backdrop_alter(array('entityreference_view'), $build, $entity_type);
     $build['#entity'] = $entity;
-    $build['#page'] = !$page;
-    $view[$entity_type][$entity->id()] = $build;
+    $build['#page'] = $page;
+    $view[] = $build;
   }
   return $view;
 }
@@ -1512,6 +1493,35 @@ function entityreference_build_content($entity_type, Entity $entity, $view_mode 
     field_attach_prepare_view($entity_type, array($key => $entity), $view_mode);
     $entity->content += field_attach_view($entity_type, $entity, $view_mode, $langcode);
   }
+
+  // Entity-specific builds
+  // @todo update once core has a build content method on entities.
+  $build_function = $entity_type . '_build_content';
+  if (function_exists($build_function)) {
+    switch ($build_function) {
+      case 'comment_build_content':
+        $node = node_load($entity->nid);
+        comment_build_content($entity, $node, $view_mode, $langcode);
+        break;
+      case 'file_build_content':
+        file_build_content($entity, $view_mode, $langcode);
+        // @see file_field_formatter_view()
+        // @todo Download link formatter for files gets WSOD because it
+        // looks for entity in specific place.
+        $entity->content['file']['#file'] = $entity;
+        break;
+      default:
+        $build_function($entity, $view_mode, $langcode);
+    }
+  }
+
+  $entity->content += array(
+    // @see template_preprocess_entityreference_rendered()
+    '#theme' => 'entityreference_rendered',
+    '#entity_type' => $entity_type,
+    '#view_mode' => $view_mode,
+    '#language' => $langcode,
+  );
 }
 
 /**

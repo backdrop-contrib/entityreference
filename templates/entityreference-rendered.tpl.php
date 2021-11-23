@@ -29,7 +29,7 @@
  */
 
 ?>
-<div class="<?php print implode(' ', $classes); ?>"<?php (empty($attributes)) ? '' : print backdrop_attributes($attributes); ?>>
+<div class="<?php print implode(' ', $classes); ?> clearfix"<?php (empty($attributes)) ? '' : print backdrop_attributes($attributes); ?>>
   <?php if (!$page): ?>
     <h2<?php (empty($title_attributes)) ? '' : print backdrop_attributes($title_attributes); ?>>
       <?php if ($url): ?>
@@ -40,9 +40,13 @@
     </h2>
   <?php endif; ?>
 
-  <div class="content"<?php (empty($content_attributes)) ? '' : print backdrop_attributes($content_attributes); ?>>
+  <div class="content clearfix"<?php (empty($content_attributes)) ? '' : print backdrop_attributes($content_attributes); ?>>
     <?php
+      // We hide the links now so that we can render them later.
+      hide($content['links']);
       print render($content);
     ?>
   </div>
+
+  <?php print render($content['links']); ?>
 </div>
