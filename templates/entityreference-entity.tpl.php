@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Default theme implementation for entities.
+ * Theme implementation for referenced entities.
  *
  * Available variables:
  * - $content: An array of comment items. Use render($content) to print them all, or
@@ -24,8 +24,7 @@
  *   into a string within the variable $classes.
  *
  * @see template_preprocess()
- * @see template_preprocess_entity()
- * @see template_process()
+ * @see template_preprocess_entityreference_entity()
  */
 
 ?>

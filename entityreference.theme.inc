@@ -6,9 +6,9 @@
  */
 
 /**
- * Process variables for entityreference-rendered.tpl.php.
+ * Process variables for entityreference-entity.tpl.php.
  */
-function template_preprocess_entityreference_rendered(&$variables) {
+function template_preprocess_entityreference_entity(&$variables) {
   $variables['view_mode'] = $variables['elements']['#view_mode'];
   $entity_type = $variables['elements']['#entity_type'];
   $variables['entity_type'] = $entity_type;
@@ -46,10 +46,10 @@ function template_preprocess_entityreference_rendered(&$variables) {
   $variables['classes_array'][] = backdrop_html_class('entity-' . $entity_type);
   $variables['classes_array'][] = backdrop_html_class($entity_type . '-' . $bundle);
 
-  $variables['theme_hook_suggestions'][] = 'entityreference_rendered__' . $entity_type;
-  $variables['theme_hook_suggestions'][] = 'entityreference_rendered__' . $entity_type . '__' . $bundle;
-  $variables['theme_hook_suggestions'][] = 'entityreference_rendered__' . $entity_type . '__' . $bundle . '__' . $variables['view_mode'];
+  $variables['theme_hook_suggestions'][] = 'entityreference_entity__' . $entity_type;
+  $variables['theme_hook_suggestions'][] = 'entityreference_entity__' . $entity_type . '__' . $bundle;
+  $variables['theme_hook_suggestions'][] = 'entityreference_entity__' . $entity_type . '__' . $bundle . '__' . $variables['view_mode'];
   if ($id = $entity->id()) {
-    $variables['theme_hook_suggestions'][] = 'entityreference_rendered__' . $entity_type . '__' . $id;
+    $variables['theme_hook_suggestions'][] = 'entityreference_entity__' . $entity_type . '__' . $id;
   }
 }
