@@ -1437,7 +1437,8 @@ function entityreference_view(EntityInterface $entity, $view_mode = 'full', $lan
  *   An array of context to pass to the build, such as $page variable.
  */
 function entityreference_build_content(EntityInterface $entity, $view_mode = 'full', $langcode = NULL, $context = array()) {
-  $info = entity_get_info($entity->entityType());
+  $entity_type = $entity->entityType();
+  $info = entity_get_info($entity_type);
 
   // Remove previously built content, if exists.
   $entity->content = array();
@@ -1446,14 +1447,14 @@ function entityreference_build_content(EntityInterface $entity, $view_mode = 'fu
   if (!empty($entity_info['fieldable'])) {
     // Perform the preparation tasks if they have not been performed yet.
     // An internal flag prevents the operation from running twice.
-    field_attach_prepare_view($entity->entityType(), array($entity->id() => $entity), $view_mode);
-    $entity->content += field_attach_view($entity->entityType(), $entity, $view_mode, $langcode);
+    field_attach_prepare_view($entity_type, array($entity->id() => $entity), $view_mode);
+    $entity->content += field_attach_view($entity_type, $entity, $view_mode, $langcode);
   }
-  entity_prepare_view($entity->entityType(), array($entity->id() => $entity));
+  entity_prepare_view($entity_type, array($entity->id() => $entity));
 
   // Allow modules to change the view mode.
   $view_mode_context = array(
-    'entity_type' => $entity->entityType(),
+    'entity_type' => $entity_type,
     'entity' => $entity,
     'langcode' => $langcode,
   );
@@ -1463,7 +1464,7 @@ function entityreference_build_content(EntityInterface $entity, $view_mode = 'fu
 
   // Entity-specific builds
   // @todo update once core has a build content method on entities.
-  $build_function = $entity->entityType() . '_build_content';
+  $build_function = $entity_type . '_build_content';
   if (function_exists($build_function)) {
     switch ($build_function) {
       case 'comment_build_content':
@@ -1493,7 +1494,7 @@ function entityreference_build_content(EntityInterface $entity, $view_mode = 'fu
   $entity->content += array(
     // @see template_preprocess_entityreference_entity()
     '#theme' => 'entityreference_entity',
-    '#entity_type' => $entity->entityType(),
+    '#entity_type' => $entity_type,
     '#view_mode' => $view_mode,
     '#language' => $langcode,
     '#entity' => $entity,
