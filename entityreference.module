@@ -1380,7 +1380,7 @@ function entityreference_field_formatter_view($entity_type, $entity, $field, $in
 
         $target_entity = clone $item['entity'];
         unset($target_entity->content);
-        $result[$delta] = entityreference_view($target_type, $target_entity, $settings['view_mode'], $target_langcode, !empty($settings['hide_title']));
+        $result[$delta] = entityreference_view($target_entity, $settings['view_mode'], $target_langcode, array('page' => !empty($settings['hide_title'])));
         if (empty($settings['links']) && isset($result[$delta]['links'])) {
           $result[$delta]['links']['#access'] = FALSE;
         }
@@ -1395,8 +1395,6 @@ function entityreference_field_formatter_view($entity_type, $entity, $field, $in
 /**
  * Generate a rendering for the given entity.
  *
- * @param $entity_type
- *   The type of the entity.
  * @param Entity $entity
  *   An entity to render.
  * @param $view_mode
@@ -1404,23 +1402,19 @@ function entityreference_field_formatter_view($entity_type, $entity, $field, $in
  * @param $langcode
  *   (optional) A language code to use for rendering. Defaults to the global
  *   content language of the current request.
- * @param $page
- *   (optional) If set will control if the entity is rendered: if TRUE
- *   the entity will be rendered without its title, so that it can be embeded
- *   in another context. If FALSE the entity will be displayed with its title
- *   in a mode suitable for lists.
- *   If unset, the page mode will be enabled if the current path is the URI
- *   of the entity, as returned by entity_uri().
+ * @param array $context
+ *   An array of context variables.
  * @return
  *   The renderable array. If there is no information on how to view an entity,
  *   FALSE is returned.
  */
-function entityreference_view($entity_type, EntityInterface $entity, $view_mode = 'full', $langcode = NULL, $page = NULL) {
-  entityreference_build_content($entity_type, $entity, $view_mode, $langcode, array('page' => $page));
+function entityreference_view(EntityInterface $entity, $view_mode = 'full', $langcode = NULL, $context = array()) {
+  entityreference_build_content($entity, $view_mode, $langcode, $context);
 
   $build = $entity->content;
 
   // Allow modules to modify the structured entity.
+  $entity_type = $entity->entityType();
   backdrop_alter(array('entityreference_view'), $build, $entity_type);
 
   return $build;
@@ -1432,8 +1426,6 @@ function entityreference_view($entity_type, EntityInterface $entity, $view_mode 
  * The content built for the entity will vary depending on the $view_mode
  * parameter.
  *
- * @param string $entity_type
- *   The type of the entity.
  * @param Entity $entity
  *   An entity object.
  * @param string $view_mode
@@ -1441,11 +1433,11 @@ function entityreference_view($entity_type, EntityInterface $entity, $view_mode 
  * @param string $langcode
  *   (optional) A language code to use for rendering. Defaults to the global
  *   content language of the current request.
- * @param array $build_context
+ * @param array $context
  *   An array of context to pass to the build, such as $page variable.
  */
-function entityreference_build_content($entity_type, EntityInterface $entity, $view_mode = 'full', $langcode = NULL, $build_context = array()) {
-  $info = entity_get_info($entity_type);
+function entityreference_build_content(EntityInterface $entity, $view_mode = 'full', $langcode = NULL, $context = array()) {
+  $info = entity_get_info($entity->entityType());
 
   // Remove previously built content, if exists.
   $entity->content = array();
@@ -1454,24 +1446,24 @@ function entityreference_build_content($entity_type, EntityInterface $entity, $v
   if (!empty($entity_info['fieldable'])) {
     // Perform the preparation tasks if they have not been performed yet.
     // An internal flag prevents the operation from running twice.
-    field_attach_prepare_view($entity_type, array($entity->id() => $entity), $view_mode);
-    $entity->content += field_attach_view($entity_type, $entity, $view_mode, $langcode);
+    field_attach_prepare_view($entity->entityType(), array($entity->id() => $entity), $view_mode);
+    $entity->content += field_attach_view($entity->entityType(), $entity, $view_mode, $langcode);
   }
-  entity_prepare_view($entity_type, array($entity->id() => $entity));
+  entity_prepare_view($entity->entityType(), array($entity->id() => $entity));
 
   // Allow modules to change the view mode.
-  $context = array(
-    'entity_type' => $entity_type,
+  $view_mode_context = array(
+    'entity_type' => $entity->entityType(),
     'entity' => $entity,
     'langcode' => $langcode,
   );
-  backdrop_alter('entityreference_view_mode', $view_mode, $context);
+  backdrop_alter('entityreference_view_mode', $view_mode, $view_mode_context);
   // Make sure the used view-mode gets stored.
   $entity->content += array('#view_mode' => $view_mode);
 
   // Entity-specific builds
   // @todo update once core has a build content method on entities.
-  $build_function = $entity_type . '_build_content';
+  $build_function = $entity->entityType() . '_build_content';
   if (function_exists($build_function)) {
     switch ($build_function) {
       case 'comment_build_content':
@@ -1490,14 +1482,22 @@ function entityreference_build_content($entity_type, EntityInterface $entity, $v
     }
   }
 
+  // If $context['page'] exists it will control how the entity is rendered:
+  // if TRUE the entity will be rendered without its title, so that it can be
+  // embeded in another context. If FALSE the entity will be displayed with
+  // its title in a mode suitable for lists. If unset, the page mode will be
+  // enabled if the current path is the URI of the entity, as returned by
+  // entity_uri().
+  $page = isset($context['page']) ? $context['page'] : NULL;
+
   $entity->content += array(
     // @see template_preprocess_entityreference_entity()
     '#theme' => 'entityreference_entity',
-    '#entity_type' => $entity_type,
+    '#entity_type' => $entity->entityType(),
     '#view_mode' => $view_mode,
     '#language' => $langcode,
     '#entity' => $entity,
-    '#page' => isset($build_context['page']) ? $build_context['page'] : NULL,
+    '#page' => $page,
   );
 }
 
