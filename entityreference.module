@@ -1380,7 +1380,7 @@ function entityreference_field_formatter_view($entity_type, $entity, $field, $in
 
         $target_entity = clone $item['entity'];
         unset($target_entity->content);
-        $result[$delta] = entityreference_view($target_entity, $settings['view_mode'], $target_langcode, array('page' => !empty($settings['hide_title'])));
+        $result[$delta] = entityreference_view(array($target_entity->id() => $target_entity), $settings['view_mode'], $target_langcode, !empty($settings['hide_title']));
         if (empty($settings['links']) && isset($result[$delta]['links'])) {
           $result[$delta]['links']['#access'] = FALSE;
         }
@@ -1393,31 +1393,79 @@ function entityreference_field_formatter_view($entity_type, $entity, $field, $in
 }
 
 /**
- * Generate a rendering for the given entity.
+ * Generate a rendering for the given entities.
  *
- * @param Entity $entity
- *   An entity to render.
- * @param $view_mode
+ * @param array $entities
+ *   An array of EntityInterface entities to render.
+ * @param string $view_mode
  *   A view mode as used by this entity type, e.g. 'full', 'teaser'...
- * @param $langcode
+ * @param string $langcode
  *   (optional) A language code to use for rendering. Defaults to the global
  *   content language of the current request.
- * @param array $context
- *   An array of context variables.
+ * @param bool|NULL $page
+ *   (optional) If set will control if the entity is rendered: if TRUE
+ *   the entity will be rendered without its title, so that it can be embeded
+ *   in another context. If FALSE the entity will be displayed with its title
+ *   in a mode suitable for lists.
+ *   If unset, the page mode will be enabled if the current path is the URI
+ *   of the entity, as returned by entity_uri().
+ *
  * @return
  *   The renderable array. If there is no information on how to view an entity,
  *   FALSE is returned.
  */
-function entityreference_view(EntityInterface $entity, $view_mode = 'full', $langcode = NULL, $context = array()) {
-  entityreference_build_content($entity, $view_mode, $langcode, $context);
+function entityreference_view($entities, $view_mode = 'full', $langcode = NULL, $page = NULL) {
+  $langcode = isset($langcode) ? $langcode : $GLOBALS['language_content']->langcode;
 
-  $build = $entity->content;
+  $view = array();
+  foreach ($entities as $entity) {
+    /* @var EntityInterface $entity */
+    entityreference_build_content($entity, $view_mode, $langcode);
 
-  // Allow modules to modify the structured entity.
-  $entity_type = $entity->entityType();
-  backdrop_alter(array('entityreference_view'), $build, $entity_type);
+    $build = $entity->content;
 
-  return $build;
+    // Entity-specific builds
+    // @todo update once core has a build content method on entities.
+    $entity_type = $entity->entityType;
+    $build_function = $entity_type . '_build_content';
+    if (function_exists($build_function)) {
+      switch ($build_function) {
+        case 'comment_build_content':
+          // Comments also need to know their Node context.
+          $node = node_load($entity->nid);
+          comment_build_content($entity, $node, $view_mode, $langcode);
+          break;
+        case 'file_build_content':
+          file_build_content($entity, $view_mode, $langcode);
+          // @see https://github.com/backdrop/backdrop-issues/issues/5370
+          // @todo Remove once core is fixed.
+          $entity->content['file']['#file'] = $entity;
+          break;
+        default:
+          $build_function($entity, $view_mode, $langcode);
+      }
+    }
+
+    $build = $entity->content;
+    // We don't need duplicate rendering info in entity->content.
+    unset($entity->content);
+
+    $build += array(
+      // @see template_preprocess_entityreference_entity()
+      '#theme' => 'entityreference_entity',
+      '#entity_type' => $entity_type,
+      '#view_mode' => $view_mode,
+      '#language' => $langcode,
+      '#entity' => $entity,
+      '#page' => $page,
+    );
+
+    // Allow modules to modify the structured entity.
+    backdrop_alter(array('entityreference_view'), $build, $entity_type);
+    $view[$entity_type][$entity->id()] = $build;
+  }
+
+  return $view;
 }
 
 /**
@@ -1426,22 +1474,21 @@ function entityreference_view(EntityInterface $entity, $view_mode = 'full', $lan
  * The content built for the entity will vary depending on the $view_mode
  * parameter.
  *
- * @param Entity $entity
+ * @param EntityInterface $entity
  *   An entity object.
  * @param string $view_mode
  *   A view mode as used by this entity type, e.g. 'full', 'teaser'...
  * @param string $langcode
  *   (optional) A language code to use for rendering. Defaults to the global
  *   content language of the current request.
- * @param array $context
- *   An array of context to pass to the build, such as $page variable.
  */
-function entityreference_build_content(EntityInterface $entity, $view_mode = 'full', $langcode = NULL, $context = array()) {
+function entityreference_build_content(EntityInterface $entity, $view_mode = 'full', $langcode = NULL) {
   $entity_type = $entity->entityType();
-  $info = entity_get_info($entity_type);
+  $entity_info = entity_get_info($entity_type);
 
   // Remove previously built content, if exists.
   $entity->content = array();
+
   $langcode = isset($langcode) ? $langcode : $GLOBALS['language_content']->langcode;
 
   if (!empty($entity_info['fieldable'])) {
@@ -1461,45 +1508,6 @@ function entityreference_build_content(EntityInterface $entity, $view_mode = 'fu
   backdrop_alter('entityreference_view_mode', $view_mode, $view_mode_context);
   // Make sure the used view-mode gets stored.
   $entity->content += array('#view_mode' => $view_mode);
-
-  // Entity-specific builds
-  // @todo update once core has a build content method on entities.
-  $build_function = $entity_type . '_build_content';
-  if (function_exists($build_function)) {
-    switch ($build_function) {
-      case 'comment_build_content':
-        // Comments also need to know their Node context.
-        $node = node_load($entity->nid);
-        comment_build_content($entity, $node, $view_mode, $langcode);
-        break;
-      case 'file_build_content':
-        file_build_content($entity, $view_mode, $langcode);
-        // @see https://github.com/backdrop/backdrop-issues/issues/5370
-        // @todo Remove once core is fixed.
-        $entity->content['file']['#file'] = $entity;
-        break;
-      default:
-        $build_function($entity, $view_mode, $langcode);
-    }
-  }
-
-  // If $context['page'] exists it will control how the entity is rendered:
-  // if TRUE the entity will be rendered without its title, so that it can be
-  // embeded in another context. If FALSE the entity will be displayed with
-  // its title in a mode suitable for lists. If unset, the page mode will be
-  // enabled if the current path is the URI of the entity, as returned by
-  // entity_uri().
-  $page = isset($context['page']) ? $context['page'] : NULL;
-
-  $entity->content += array(
-    // @see template_preprocess_entityreference_entity()
-    '#theme' => 'entityreference_entity',
-    '#entity_type' => $entity_type,
-    '#view_mode' => $view_mode,
-    '#language' => $langcode,
-    '#entity' => $entity,
-    '#page' => $page,
-  );
 }
 
 /**
