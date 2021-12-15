@@ -43,8 +43,8 @@ function template_preprocess_entityreference_entity(&$variables) {
   list(, , $bundle) = entity_extract_ids($entity_type, $entity);
 
   // Gather css classes.
-  $variables['classes_array'][] = backdrop_html_class('entity-' . $entity_type);
-  $variables['classes_array'][] = backdrop_html_class($entity_type . '-' . $bundle);
+  $variables['classes'][] = backdrop_html_class('entityreference-entity-' . $entity_type);
+  $variables['classes'][] = backdrop_html_class('entityreference-entity-' . $entity_type . '-' . $bundle);
 
   $variables['theme_hook_suggestions'][] = 'entityreference_entity__' . $entity_type;
   $variables['theme_hook_suggestions'][] = 'entityreference_entity__' . $entity_type . '__' . $bundle;

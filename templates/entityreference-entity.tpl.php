@@ -16,12 +16,8 @@
  *   CSS. It can be manipulated through the variable $classes_array from
  *   preprocess functions. By default the following classes are available, where
  *   the parts enclosed by {} are replaced by the appropriate values:
- *   - entity-{ENTITY_TYPE}
- *   - {ENTITY_TYPE}-{BUNDLE}
- *
- * Other variables:
- * - $classes_array: Array of html class attribute values. It is flattened
- *   into a string within the variable $classes.
+ *   - entityreference-entity-{ENTITY_TYPE}
+ *   - entityreference-entity-{ENTITY_TYPE}-{BUNDLE}
  *
  * @see template_preprocess()
  * @see template_preprocess_entityreference_entity()
