@@ -1426,7 +1426,7 @@ function entityreference_view($entities, $view_mode = 'full', $langcode = NULL, 
 
     // Entity-specific builds
     // @todo update once core has a build content method on entities.
-    $entity_type = $entity->entityType;
+    $entity_type = $entity->entityType();
     $build_function = $entity_type . '_build_content';
     if (function_exists($build_function)) {
       switch ($build_function) {
