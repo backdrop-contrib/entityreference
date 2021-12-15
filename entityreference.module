@@ -1380,7 +1380,8 @@ function entityreference_field_formatter_view($entity_type, $entity, $field, $in
 
         $target_entity = clone $item['entity'];
         unset($target_entity->content);
-        $result[$delta] = entityreference_view(array($target_entity->id() => $target_entity), $settings['view_mode'], $target_langcode, !empty($settings['hide_title']));
+        $view = entityreference_view(array($target_entity->id() => $target_entity), $settings['view_mode'], $target_langcode, !empty($settings['hide_title']));
+        $result[$delta] = $view[$target_entity->entityType()][$target_entity->id()];
         if (empty($settings['links']) && isset($result[$delta]['links'])) {
           $result[$delta]['links']['#access'] = FALSE;
         }
