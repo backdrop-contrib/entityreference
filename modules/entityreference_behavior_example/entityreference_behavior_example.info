@@ -1,0 +1,6 @@
+name = Entity Reference Behavior Example
+description = Provides some example code for implementing Entity Reference behaviors.
+backdrop = 1.x
+type = module
+package = Fields
+dependencies[] = entityreference

@@ -1,0 +1,5 @@
+name = Entity Reference Helper
+description = Additional support and integration for entity reference fields: Feeds, Devel Generate, Migrate, Diff, and examples.
+package = Fields
+backdrop = 1.x
+type = module

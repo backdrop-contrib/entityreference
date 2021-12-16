@@ -1,0 +1,15 @@
+<?php
+
+/**
+ * @file
+ * Helper files for Entity Reference
+ */
+
+/**
+ * Implements hook_autoload_info().
+ */
+function entityreference_helper_autoload_info() {
+  return array(
+    'MigrateEntityReferenceFieldHandler' => 'entityreference_helper.migrate.inc',
+  );
+}

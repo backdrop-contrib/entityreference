@@ -10,7 +10,7 @@
  *
  * @see FeedsNodeProcessor::getMappingTargets().
  */
-function entityreference_feeds_processor_targets_alter(&$targets, $entity_type, $bundle_name) {
+function entityreference_helper_feeds_processor_targets_alter(&$targets, $entity_type, $bundle_name) {
 
   foreach (field_info_instances($entity_type, $bundle_name) as $name => $instance) {
     $info = field_info_field($name);
@@ -18,7 +18,7 @@ function entityreference_feeds_processor_targets_alter(&$targets, $entity_type, 
       // We don't use ":guid" in key, not to break existing configurations.
       $targets[$name] = array(
         'name'        => check_plain($instance['label'] . t(' (Entity reference by Feeds GUID)')),
-        'callback'    => 'entityreference_feeds_set_target',
+        'callback'    => 'entityreference_helper_feeds_set_target',
         'description' => t('The field instance @label of @id matched by Feeds GUID.', array(
           '@label' => $instance['label'],
           '@id'    => $name,
@@ -26,7 +26,7 @@ function entityreference_feeds_processor_targets_alter(&$targets, $entity_type, 
       );
       $targets[$name . ':url'] = array(
         'name'        => check_plain($instance['label'] . t(' (Entity reference by Feeds URL)')),
-        'callback'    => 'entityreference_feeds_set_target',
+        'callback'    => 'entityreference_helper_feeds_set_target',
         'description' => t('The field instance @label of @id matched by Feeds URL.', array(
           '@label' => $instance['label'],
           '@id'    => $name,
@@ -35,7 +35,7 @@ function entityreference_feeds_processor_targets_alter(&$targets, $entity_type, 
       );
       $targets[$name . ':etid'] = array(
         'name'        => check_plain($instance['label'] . t(' (Entity reference by Entity ID)')),
-        'callback'    => 'entityreference_feeds_set_target',
+        'callback'    => 'entityreference_helper_feeds_set_target',
         'description' => t('The field instance @label of @id matched by Entity ID.', array(
           '@label' => $instance['label'],
           '@id'    => $name,
@@ -44,7 +44,7 @@ function entityreference_feeds_processor_targets_alter(&$targets, $entity_type, 
       );
       $targets[$name . ':label'] = array(
         'name'        => check_plain($instance['label'] . t(' (Entity reference by Entity label)')),
-        'callback'    => 'entityreference_feeds_set_target',
+        'callback'    => 'entityreference_helper_feeds_set_target',
         'description' => t('The field instance @label of @id matched by Entity label.', array(
           '@label' => $instance['label'],
           '@id'    => $name,
@@ -71,7 +71,7 @@ function entityreference_feeds_processor_targets_alter(&$targets, $entity_type, 
  * @param $value
  *   The value to map. MUST be an array.
  */
-function entityreference_feeds_set_target($source, $entity, $target, $value) {
+function entityreference_helper_feeds_set_target($source, $entity, $target, $value) {
 
   // Don't do anything if we weren't given any data.
   if (empty($value)) {
