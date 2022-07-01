@@ -1387,6 +1387,25 @@ function entityreference_field_formatter_view($entity_type, $entity, $field, $in
   return $result;
 }
 
+/** 
+ * Helper to recurse through the render array to modify #theme.
+ * 
+ * @param array $render_array
+ *   The render array to modify.
+ */
+function _entityreference_recursive_add_theme(&$render_array) {
+  if (is_array($render_array)) {
+    if (!isset($render_array['#theme'])) {
+      foreach ($render_array as &$sublevel) {
+        _entityreference_recursive_add_theme($sublevel);
+      }
+    } 
+    else {
+      $render_array['#theme'] .= '__entityreference';
+    }
+  }
+}
+
 /**
  * Implements hook_views_api().
  */
