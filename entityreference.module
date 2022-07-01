@@ -1378,7 +1378,7 @@ function entityreference_field_formatter_view($entity_type, $entity, $field, $in
         if (empty($settings['links']) && isset($result[$delta][$target_type][$item[$column]]['links'])) {
           $result[$delta][$target_type][$item[$column]]['links']['#access'] = FALSE;
         }
-        $result[$delta][$target_type][$item[$column]]['#theme'] .= '__entityreference';
+        _entityreference_recursive_add_theme($result[$delta][$target_type][$item[$column]]);
         $depth = 0;
       }
       break;
