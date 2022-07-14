@@ -1,6 +1,11 @@
 Entity Reference
 ================
 
+**Entity Reference module was moved into Backdrop core 1.23.0. Use of this module is no longer necessary 
+and no further changes will be made here. If you would like to report a bug or request 
+against Entity Reference, file an issue in the main Backdrop CMS core repository at 
+https://github.com/backdrop/backdrop-issues.**
+
 Provides a field type that can reference arbitrary entities. For example, there 
 could be "team" and "player" content types, and each player could have a field 
 where authors could select which team they belong to.
