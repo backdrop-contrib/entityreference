@@ -1,7 +1,7 @@
 Entity Reference
 ================
 
-**Entity Reference module was moved into Backdrop core 1.23.0. Use of this module is no longer necessary 
+**Entity Reference module will be (was) moved into Backdrop core 1.23.0. Use of this module is no longer necessary 
 and no further changes will be made here. If you would like to report a bug or request 
 against Entity Reference, file an issue in the main Backdrop CMS core repository at 
 https://github.com/backdrop/backdrop-issues.**
