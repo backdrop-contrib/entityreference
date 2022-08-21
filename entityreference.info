@@ -4,6 +4,6 @@ package = Fields
 backdrop = 1.x
 type = module
 
-dependencies[] = system (>= 1.21.0)
+dependencies[] = system (>= 1.21.0, < 1.23.0)
 dependencies[] = field
 dependencies[] = entity
