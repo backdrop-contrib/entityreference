@@ -1,3 +1,7 @@
+NOTE: The functionality of this module is now included in Backdrop core since
+version 1.24.0 (released September 15, 2022). You do not need this module if you
+are running a current version of Backdrop, and its installation is blocked.
+
 Entity Reference
 ================
 
